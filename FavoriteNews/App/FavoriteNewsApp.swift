@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct FavoriteNewsApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
+                .modelContainer(for: FavoriteArticle.self)
         }
     }
 }
