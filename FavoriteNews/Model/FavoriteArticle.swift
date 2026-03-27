@@ -15,12 +15,14 @@ final class FavoriteArticle {
     var title: String
     var url: String?
     var savedAt: Date
+    var isFavorite: Bool
     
-    init(id: Int, title: String, url: String? = nil) {
+    init(id: Int, title: String, url: String? = nil, isFavorite: Bool = false) {
         self.id = id
         self.title = title
         self.url = url
         self.savedAt = Date()
+        self.isFavorite = isFavorite
     }
 }
 
@@ -33,7 +35,8 @@ extension FavoriteArticle {
         do {
             container = try ModelContainer(for: FavoriteArticle.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         } catch {
-            print("Error on InMemoryOnlyData Setting: \(error)")
+            fatalError("Error on InMemoryOnlyData Setting: \(error)")
+            
         }
         
         let mockArticles: [FavoriteArticle] = [
@@ -51,5 +54,8 @@ extension FavoriteArticle {
         for article in mockArticles {
             container.mainContext.insert(article)
         }
+        
+        try? container.mainContext.save()
+        return container
     }
 }

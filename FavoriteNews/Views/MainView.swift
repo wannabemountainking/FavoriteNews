@@ -6,11 +6,40 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MainView: View {
+    
+    @Environment(\.modelContext) private var modelContext
+    
+    @Query var articles: [FavoriteArticle] = []
+    @State private var vm = FavoriteNewsViewModel()
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
+        NavigationStack {
+            ScrollView {
+                List {
+                    ForEach(articles, id: \.id) { article in
+                        Section {
+                            Text(article.title)
+                        }
+                    }
+                } //:LIST
+            } //:SCROLL
+        } //:NAVIGATION
+        .onAppear {
+            vm.modelContext = self.modelContext
+            Task {
+                do {
+                    try await vm.fetchArticles()
+                } catch err as NetworkError {
+                    switch err {
+                        
+                    }
+                }
+            }
+        }
+    }//:body
 }
 
 #Preview {
