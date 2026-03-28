@@ -12,7 +12,7 @@ import SwiftData
 enum NetworkError: String, Error {
     case invalidURL = "URL 에러 발생"
     case invalidResponse = "서버 응답 에러 발생"
-    case invalideData = "데이터 파싱 에러 발생"
+    case invalidData = "데이터 파싱 에러 발생"
 }
 
 
@@ -21,8 +21,6 @@ enum NetworkError: String, Error {
 final class FavoriteNewsViewModel {
     
     var modelContext: ModelContext? = nil
-    
-    var isRenew: Bool = false
     
     let idsUrl = "https://hacker-news.firebaseio.com/v0/topstories.json"
     var articles: [FavoriteArticle] = []
@@ -67,10 +65,26 @@ final class FavoriteNewsViewModel {
         
         // MainActor 작업(Swift Data)
         guard let modelContext = self.modelContext else {return}
-        for article in articles {
-            let favoriteArticle = FavoriteArticle(id: article.id, title: article.title, url: article.url)
-            modelContext.insert(favoriteArticle)
-        }
+        
+        let savedArticles = try modelContext.fetch(FetchDescriptor<FavoriteArticle>())
+        
+        savedArticles
+            .filter { $0.isFavorite == false }
+            .filter { saved in
+                !articles.contains(where: { $0.id == saved.id })
+            }
+            .forEach {
+                modelContext.delete($0)
+            }
+        
+        articles
+            .filter { fetched in
+                !savedArticles.contains(where: { $0.id == fetched.id })
+            }
+            .forEach {
+                let articleWillBeAdded = FavoriteArticle(id: $0.id, title: $0.title, url: $0.url)
+                modelContext.insert(articleWillBeAdded)
+            }
     }
     
     nonisolated func fetchArticle(from url: URL) async throws -> Article {
@@ -83,7 +97,7 @@ final class FavoriteNewsViewModel {
             let decodedData = try JSONDecoder().decode(Article.self, from: data)
             return decodedData
         } catch {
-            throw NetworkError.invalideData
+            throw NetworkError.invalidData
         }
     }
 }
